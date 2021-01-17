@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
+
+	"mvdan.cc/xurls"
 )
 
 // Count number of elements we will need in the string array.
@@ -30,6 +33,27 @@ func fillStringArray(emptyArray []string, content []byte) {
 	}
 }
 
+// Extract links from entire html tags
+func extractLinks(stringArray []string) {
+	rxRelaxed := xurls.Relaxed()
+	for i := 0; i < len(stringArray); i++ {
+		stringArray[i] = rxRelaxed.FindString(stringArray[i])
+	}
+}
+
+// Send GET request to all links in array
+func httpRequestLinks(stringArray []string) {
+	for i := 0; i < len(stringArray); i++ {
+		resp, err := http.Get(stringArray[i])
+		if err != nil {
+			fmt.Println("Unknown")
+		} else {
+			fmt.Println(resp.StatusCode)
+		}
+	}
+
+}
+
 func main() {
 	// Read file in local directory - store contents in content.
 	fileName := os.Args[1]
@@ -44,5 +68,9 @@ func main() {
 	// Fill the made array of strings with content which is an array of bytes
 	fillStringArray(stringArray, content)
 
-	fmt.Println(stringArray[2])
+	// Extract all links from the array
+	extractLinks(stringArray)
+
+	httpRequestLinks(stringArray)
+
 }
