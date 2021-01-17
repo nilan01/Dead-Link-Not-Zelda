@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/fatih/color"
 	"mvdan.cc/xurls"
 )
 
@@ -43,12 +43,23 @@ func extractLinks(stringArray []string) {
 
 // Send GET request to all links in array
 func httpRequestLinks(stringArray []string) {
+	//colorGreen := "\033[32m"
+	c1 := color.New(color.FgHiGreen).Add()
+	c2 := color.New(color.FgHiRed).Add()
+	c3 := color.New(color.FgHiBlack).Add()
 	for i := 0; i < len(stringArray); i++ {
-		resp, err := http.Get(stringArray[i])
+		resp, err := http.Head(stringArray[i])
 		if err != nil {
-			fmt.Println("Unknown")
+			c3.Printf("%-10v", "UNKNOWN")
+			c3.Println(stringArray[i])
 		} else {
-			fmt.Println(resp.StatusCode)
+			if resp.StatusCode == 200 {
+				c1.Printf("%-10v", "GOOD")
+				c1.Println(stringArray[i])
+			} else if resp.StatusCode == 400 || resp.StatusCode == 404 {
+				c2.Printf("%-10v", "BAD")
+				c2.Println(stringArray[i])
+			}
 		}
 	}
 
@@ -65,12 +76,13 @@ func main() {
 	// Make array of strings with specific number of elements.
 	stringArray := make([]string, determineArraySize(content))
 
-	// Fill the made array of strings with content which is an array of bytes
+	// Fill the made array of strings with content which is an array of bytes.
 	fillStringArray(stringArray, content)
 
-	// Extract all links from the array
+	// Extract all links from the array.
 	extractLinks(stringArray)
 
+	// Send GET Requests to array of links
 	httpRequestLinks(stringArray)
 
 }
